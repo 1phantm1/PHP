@@ -8,15 +8,24 @@
 </head>
 <body>
     <?php 
-        $wallet = $_POST["real"];
-        $date = date('m/d/Y', time());
-        $url = 'https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/CotacaoDolarPeriodo(dataInicial=@dataInicial,dataFinalCotacao=@dataFinalCotacao)?@dataInicial=\'07-12-2024\'&@dataFinalCotacao=' . $date . '&$top=1&$orderby=dataHoraCotacao%20desc&$format=json&$select=cotacaoCompra,cotacaoVenda';
-        
-        $data = json_decode(file_get_contents($url), true);
-        price = $data["value"][0]["cotacaoCompra"]; 
+        // captação da entrada
+        $real = $_POST["real"] ?? 1000;
+        //padrão de numeração
         $standard = numfmt_create("pt_BR", NumberFormatter::CURRENCY);
-        $formatted_real = numfmt_format_currency($standard, $wallet, "BRL");
-        $formatted_dolar = numfmt_format_currency($standard, $us, "USD");
+        // inicio e fim do tempo
+        $start = date("m-d-Y", strtotime("-7 days"));
+        $end = date("m-d-Y");
+        //url da API
+        $url = 'https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/CotacaoDolarPeriodo(dataInicial=@dataInicial,dataFinalCotacao=@dataFinalCotacao)?@dataInicial=\'' . $start . '\'&@dataFinalCotacao=\''. $end .'\'&$top=1&$orderby=dataHoraCotacao%20desc&$format=json&$select=cotacaoCompra,dataHoraCotacao';
+        // conversão da url para JSON usando array
+        $data = json_decode(file_get_contents($url), true);
+        // pegando o valor do preço de compra do dólar
+        $price = $data["value"][0]["cotacaoCompra"]; 
+        // conversão do valor
+        $conversion = $real / $price;
+
+        $formatted_real = numfmt_format_currency($standard, $real, "BRL");
+        $formatted_dolar = numfmt_format_currency($standard, $conversion, "USD");
     ?>
     <section>
         <h1>Conversor de moedas v1.0</h1>
